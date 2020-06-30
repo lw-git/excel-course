@@ -1,18 +1,22 @@
 import {$} from '@core/dom';
 import {Emitter} from '@core/Emitter';
+import {StoreSubscriber} from '@core/StoreSubscriber';
 
 export class Excel {
   constructor(selector, options) {
     this.$el = $(selector);
     this.components = options.components || [];
+    this.store = options.store;
     this.emitter = new Emitter();
+    this.subscriber = new StoreSubscriber(this.store);
   }
   getRoot() {
     // root element
     const $root = $.create('div', 'excel');
 
     const componentOptions = {
-      emitter: this.emitter
+      emitter: this.emitter,
+      store: this.store
     }
 
     // wrap each component with Dom class and append to root element
@@ -33,11 +37,13 @@ export class Excel {
 
   render() {
     this.$el.append(this.getRoot());
+    this.subscriber.subscribeComponents(this.components);
     // add event listeners to components
-    this.components.forEach((component) => component.init())
+    this.components.forEach((component) => component.init());
   }
 
   destroy() {
-    this.components.forEach((component) => component.destroy())
+    this.subscriber.unsubscribeFromStore();
+    this.components.forEach((component) => component.destroy());
   }
 }
